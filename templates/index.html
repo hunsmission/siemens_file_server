@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Siemens File 공유</title>
+    <link rel="icon" type="image/svg+xml" href="/icon/siemens_logo.svg">
+    <link rel="icon" type="image/png" href="/icon/siemens_logo.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .breadcrumb {
+            padding: 15px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .breadcrumb-item {
+            display: flex;
+            align-items: center;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .breadcrumb-item:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        .breadcrumb-separator {
+            margin: 0 8px;
+            color: #6c757d;
+        }
+
+        .breadcrumb-current {
+            color: #212529;
+            font-weight: 600;
+        }
+
+        .search-box {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .stats {
+            padding: 15px 30px;
+            background: #fff;
+            border-bottom: 1px solid #e9ecef;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .file-list {
+            padding: 20px 30px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .file-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .folder-icon {
+            background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: #212529;
+            margin-bottom: 5px;
+            word-break: break-all;
+        }
+
+        .file-meta {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .download-btn {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .delete-btn {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            margin-left: 8px;
+        }
+
+        .delete-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        }
+
+        .btn-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .copy-link-btn {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .copy-link-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
+        }
+
+        .copy-link-btn.copied {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .trash-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .trash-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state svg {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .upload-section {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .upload-area:hover {
+            background: #f8f9fa;
+            border-color: #764ba2;
+        }
+
+        .upload-area.drag-over {
+            background: #e7f3ff;
+            border-color: #667eea;
+            border-style: solid;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            color: #667eea;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .upload-hint {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .upload-progress {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+        }
+
+        .upload-status {
+            margin-top: 10px;
+            color: #28a745;
+            font-weight: 500;
+        }
+
+        .temp-files-section {
+            display: none;
+            padding: 20px 30px;
+            background: #fff3cd;
+            border-bottom: 2px solid #ffc107;
+        }
+
+        .temp-files-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .temp-files-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #856404;
+        }
+
+        .temp-files-list {
+            margin-bottom: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .temp-file-item {
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .temp-file-info {
+            flex: 1;
+        }
+
+        .temp-file-name {
+            font-weight: 500;
+            color: #212529;
+        }
+
+        .temp-file-size {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .temp-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-confirm {
+            padding: 10px 30px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .btn-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-cancel-upload {
+            padding: 10px 30px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .btn-cancel-upload:hover {
+            background: #5a6268;
+        }
+
+        .action-buttons {
+            padding: 15px 30px;
+            background: #fff;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .create-folder-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .create-folder-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #212529;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: #28a745;
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .modal-btn-cancel {
+            background: #6c757d;
+            color: white;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #5a6268;
+        }
+
+        .modal-btn-create {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        .modal-btn-create:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+
+        .trash-item {
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .trash-item-info {
+            flex: 1;
+        }
+
+        .trash-item-name {
+            font-weight: 500;
+            color: #856404;
+            margin-bottom: 5px;
+        }
+
+        .trash-item-meta {
+            font-size: 13px;
+            color: #856404;
+            opacity: 0.8;
+        }
+
+        .btn-restore {
+            padding: 8px 16px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-restore:hover {
+            background: #218838;
+        }
+
+        .trash-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .file-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .file-icon {
+                margin-bottom: 10px;
+            }
+
+            .download-btn {
+                width: 100%;
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📁 Siemens 파일 공유</h1>
+            <p>원하는 파일을 검색하고 다운로드하세요</p>
+        </div>
+
+        {% if current_path or breadcrumbs %}
+        <div class="breadcrumb">
+            <a href="/browse/" class="breadcrumb-item">🏠 홈</a>
+            {% for crumb in breadcrumbs %}
+                <span class="breadcrumb-separator">›</span>
+                {% if loop.last %}
+                    <span class="breadcrumb-current">{{ crumb.name }}</span>
+                {% else %}
+                    <a href="/browse/{{ crumb.path }}" class="breadcrumb-item">{{ crumb.name }}</a>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="action-buttons">
+            <button class="create-folder-btn" id="create-folder-btn">
+                📁 새 폴더 만들기
+            </button>
+            <button class="trash-btn" id="trash-btn">
+                🗑️ 휴지통 (<span id="trash-count">0</span>)
+            </button>
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-area" id="upload-area">
+                <div class="upload-icon">📤</div>
+                <div class="upload-text">클릭하거나 파일을 드래그하여 업로드</div>
+                <div class="upload-hint">최대 50GB까지 업로드 가능 (파일을 선택하면 임시 저장 후 확인 버튼으로 완료)</div>
+                <input type="file" id="file-input" multiple>
+            </div>
+            <div class="upload-progress" id="upload-progress">
+                <div id="upload-status-text">업로드 중...</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="upload-status" id="upload-status"></div>
+            </div>
+        </div>
+
+        <div class="temp-files-section" id="temp-files-section">
+            <div class="temp-files-header">
+                <div class="temp-files-title">⏳ 임시 저장된 파일</div>
+            </div>
+            <div class="temp-files-list" id="temp-files-list">
+                <!-- 임시 파일 목록이 여기에 추가됩니다 -->
+            </div>
+            <div class="temp-actions">
+                <button class="btn-confirm" id="btn-confirm-upload">✓ 업로드 완료</button>
+                <button class="btn-cancel-upload" id="btn-cancel-upload">✗ 취소</button>
+            </div>
+        </div>
+
+        <div class="search-box">
+            <form method="GET" action="/browse/{% if current_path %}{{ current_path }}{% endif %}">
+                <input
+                    type="text"
+                    name="search"
+                    class="search-input"
+                    placeholder="파일 및 폴더 검색..."
+                    value="{{ search_query }}"
+                    autofocus
+                >
+            </form>
+        </div>
+
+        <div class="stats">
+            총 <strong>{{ items|length }}</strong>개 항목
+        </div>
+
+        <div class="file-list">
+            {% if items %}
+                {% for item in items %}
+                    {% if item.is_dir %}
+                        <div class="file-item" style="cursor: default;">
+                            <div class="file-icon folder-icon" style="cursor: pointer;" onclick="location.href='/browse/{{ item.path }}'">
+                                📁
+                            </div>
+                            <div class="file-info" style="cursor: pointer;" onclick="location.href='/browse/{{ item.path }}'">
+                                <div class="file-name">{{ item.name }}</div>
+                                <div class="file-meta">
+                                    폴더 • {{ item.modified }}
+                                </div>
+                            </div>
+                            <div class="btn-actions">
+                                <button class="copy-link-btn" onclick="copyDownloadLink('{{ item.path }}'); event.stopPropagation();" title="다운로드 링크 복사">🔗 링크</button>
+                                <a href="/download/{{ item.path }}" class="download-btn" onclick="event.stopPropagation()" title="ZIP으로 다운로드">💾 ZIP</a>
+                                <button class="delete-btn" onclick="deleteItem('{{ item.path }}', '{{ item.name }}', true); event.stopPropagation();">삭제</button>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="file-item">
+                            <div class="file-icon">
+                                {% set ext = item.name.split('.')[-1].upper() %}
+                                {{ ext[:3] if ext else '📄' }}
+                            </div>
+                            <div class="file-info">
+                                <div class="file-name">{{ item.name }}</div>
+                                <div class="file-meta">
+                                    {{ item.size }} • {{ item.modified }}
+                                </div>
+                            </div>
+                            <div class="btn-actions">
+                                <button class="copy-link-btn" onclick="copyDownloadLink('{{ item.path }}'); event.stopPropagation();" title="다운로드 링크 복사">🔗 링크</button>
+                                <a href="/download/{{ item.path }}" class="download-btn" onclick="event.stopPropagation()">다운로드</a>
+                                <button class="delete-btn" onclick="deleteItem('{{ item.path }}', '{{ item.name }}', false); event.stopPropagation();">삭제</button>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <h3>항목이 없습니다</h3>
+                    <p>{% if search_query %}검색 결과가 없습니다{% else %}이 폴더는 비어있습니다{% endif %}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 폴더 생성 모달 -->
+    <div class="modal" id="folder-modal">
+        <div class="modal-content">
+            <div class="modal-header">새 폴더 만들기</div>
+            <input
+                type="text"
+                class="modal-input"
+                id="folder-name-input"
+                placeholder="폴더 이름 입력..."
+                maxlength="255"
+            >
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="modal-cancel">취소</button>
+                <button class="modal-btn modal-btn-create" id="modal-create">만들기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 휴지통 모달 -->
+    <div class="modal" id="trash-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">🗑️ 휴지통 (24시간 후 자동 삭제)</div>
+            <div class="trash-list" id="trash-list">
+                <!-- 휴지통 목록이 여기에 추가됩니다 -->
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="trash-modal-close">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 파일 아이템 클릭시 다운로드 (폴더가 아닐 때만)
+        document.querySelectorAll('.file-item:not([href])').forEach(item => {
+            item.addEventListener('click', function(e) {
+                // 버튼 클릭은 무시
+                if (e.target.classList.contains('download-btn') ||
+                    e.target.classList.contains('delete-btn') ||
+                    e.target.closest('.download-btn') ||
+                    e.target.closest('.delete-btn') ||
+                    e.target.closest('.btn-actions')) {
+                    return;
+                }
+
+                // file-icon이나 file-info 클릭 시
+                if (e.target.closest('.file-icon') || e.target.closest('.file-info')) {
+                    // onclick 속성이 있으면 (폴더) 그걸 실행
+                    const icon = this.querySelector('.file-icon[onclick]');
+                    if (icon) {
+                        icon.click();
+                        return;
+                    }
+                }
+
+                // 그 외 영역 클릭 시 다운로드 (파일만)
+                const downloadBtn = this.querySelector('.download-btn');
+                if (downloadBtn && !downloadBtn.textContent.includes('ZIP')) {
+                    downloadBtn.click();
+                }
+            });
+        });
+
+        // 업로드 기능
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const uploadProgress = document.getElementById('upload-progress');
+        const progressFill = document.getElementById('progress-fill');
+        const uploadStatus = document.getElementById('upload-status');
+        const uploadStatusText = document.getElementById('upload-status-text');
+        const tempFilesSection = document.getElementById('temp-files-section');
+        const tempFilesList = document.getElementById('temp-files-list');
+        const btnConfirmUpload = document.getElementById('btn-confirm-upload');
+        const btnCancelUpload = document.getElementById('btn-cancel-upload');
+
+        // 현재 경로
+        const currentPath = '{{ current_path }}';
+
+        // 클릭으로 파일 선택
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // 파일 선택시 업로드
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                uploadFiles(e.target.files);
+            }
+        });
+
+        // 드래그 앤 드롭
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+
+            if (e.dataTransfer.files.length > 0) {
+                uploadFiles(e.dataTransfer.files);
+            }
+        });
+
+        // 파일 업로드 함수 (임시 폴더에 저장)
+        function uploadFiles(files) {
+            const formData = new FormData();
+
+            for (let i = 0; i < files.length; i++) {
+                formData.append('files[]', files[i]);
+            }
+
+            // 진행 상태 표시
+            uploadProgress.style.display = 'block';
+            uploadStatusText.textContent = `${files.length}개 파일 임시 저장 중...`;
+            uploadStatus.textContent = '';
+            progressFill.style.width = '0%';
+
+            // 임시 업로드 경로
+            const uploadUrl = currentPath ? `/upload_temp/${currentPath}` : '/upload_temp';
+
+            // AJAX 업로드
+            const xhr = new XMLHttpRequest();
+
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    progressFill.style.width = percentComplete + '%';
+                }
+            });
+
+            xhr.addEventListener('load', () => {
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    uploadStatusText.textContent = '임시 저장 완료!';
+                    uploadStatus.textContent = `${response.count}개 파일이 임시 저장되었습니다. 아래에서 확인 후 "업로드 완료" 버튼을 눌러주세요.`;
+                    uploadStatus.style.color = '#28a745';
+                    progressFill.style.width = '100%';
+
+                    // 임시 파일 목록 표시
+                    displayTempFiles(response.files);
+
+                    // 3초 후 진행바 숨기기
+                    setTimeout(() => {
+                        uploadProgress.style.display = 'none';
+                    }, 3000);
+                } else {
+                    const response = JSON.parse(xhr.responseText);
+                    uploadStatusText.textContent = '업로드 실패';
+                    uploadStatus.textContent = response.error || '알 수 없는 오류가 발생했습니다';
+                    uploadStatus.style.color = '#dc3545';
+                }
+            });
+
+            xhr.addEventListener('error', () => {
+                uploadStatusText.textContent = '업로드 실패';
+                uploadStatus.textContent = '네트워크 오류가 발생했습니다';
+                uploadStatus.style.color = '#dc3545';
+            });
+
+            xhr.open('POST', uploadUrl, true);
+            xhr.send(formData);
+
+            // 파일 입력 초기화
+            fileInput.value = '';
+        }
+
+        // 임시 파일 목록 표시
+        function displayTempFiles(files) {
+            tempFilesList.innerHTML = '';
+
+            files.forEach(file => {
+                const item = document.createElement('div');
+                item.className = 'temp-file-item';
+                item.innerHTML = `
+                    <div class="temp-file-info">
+                        <div class="temp-file-name">${file.name}</div>
+                        <div class="temp-file-size">${file.size_str}</div>
+                    </div>
+                `;
+                tempFilesList.appendChild(item);
+            });
+
+            tempFilesSection.style.display = 'block';
+        }
+
+        // 업로드 확정
+        btnConfirmUpload.addEventListener('click', () => {
+            if (!confirm('임시 저장된 파일을 이 위치에 업로드하시겠습니까?')) {
+                return;
+            }
+
+            btnConfirmUpload.disabled = true;
+            btnConfirmUpload.textContent = '처리 중...';
+
+            fetch('/confirm_upload', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`${data.count}개 파일이 업로드되었습니다!`);
+                    location.reload();
+                } else {
+                    alert('오류: ' + (data.error || '업로드 실패'));
+                    btnConfirmUpload.disabled = false;
+                    btnConfirmUpload.textContent = '✓ 업로드 완료';
+                }
+            })
+            .catch(error => {
+                alert('네트워크 오류: ' + error);
+                btnConfirmUpload.disabled = false;
+                btnConfirmUpload.textContent = '✓ 업로드 완료';
+            });
+        });
+
+        // 업로드 취소
+        btnCancelUpload.addEventListener('click', () => {
+            if (!confirm('임시 저장된 파일을 모두 삭제하시겠습니까?')) {
+                return;
+            }
+
+            fetch('/cancel_upload', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    tempFilesSection.style.display = 'none';
+                    tempFilesList.innerHTML = '';
+                    alert('업로드가 취소되었습니다');
+                } else {
+                    alert('오류: ' + (data.error || '취소 실패'));
+                }
+            })
+            .catch(error => {
+                alert('네트워크 오류: ' + error);
+            });
+        });
+
+        // 삭제 기능
+        function deleteItem(path, name, isDir) {
+            const itemType = isDir ? '폴더' : '파일';
+
+            if (!confirm(`"${name}" ${itemType}을(를) 삭제하시겠습니까?\n\n휴지통으로 이동되며 24시간 후 자동으로 영구 삭제됩니다.`)) {
+                return;
+            }
+
+            if (!confirm(`정말로 삭제하시겠습니까?\n이 작업은 휴지통에서 복원할 수 있습니다.`)) {
+                return;
+            }
+
+            fetch(`/delete/${path}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('오류: ' + (data.error || '삭제 실패'));
+                }
+            })
+            .catch(error => {
+                alert('네트워크 오류: ' + error);
+            });
+        }
+
+        // 휴지통 기능
+        const trashBtn = document.getElementById('trash-btn');
+        const trashModal = document.getElementById('trash-modal');
+        const trashList = document.getElementById('trash-list');
+        const trashCount = document.getElementById('trash-count');
+        const trashModalClose = document.getElementById('trash-modal-close');
+
+        // 휴지통 개수 업데이트
+        function updateTrashCount() {
+            fetch('/trash/list')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    trashCount.textContent = data.count;
+                }
+            })
+            .catch(error => {
+                console.error('휴지통 개수 조회 오류:', error);
+            });
+        }
+
+        // 페이지 로드 시 휴지통 개수 업데이트
+        updateTrashCount();
+
+        // 휴지통 버튼 클릭
+        trashBtn.addEventListener('click', () => {
+            loadTrashList();
+            trashModal.classList.add('active');
+        });
+
+        // 휴지통 모달 닫기
+        trashModalClose.addEventListener('click', () => {
+            trashModal.classList.remove('active');
+        });
+
+        // 모달 바깥 클릭시 닫기
+        trashModal.addEventListener('click', (e) => {
+            if (e.target === trashModal) {
+                trashModal.classList.remove('active');
+            }
+        });
+
+        // 휴지통 목록 로드
+        function loadTrashList() {
+            fetch('/trash/list')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayTrashList(data.items);
+                } else {
+                    alert('오류: ' + (data.error || '휴지통 조회 실패'));
+                }
+            })
+            .catch(error => {
+                alert('네트워크 오류: ' + error);
+            });
+        }
+
+        // 휴지통 목록 표시
+        function displayTrashList(items) {
+            if (items.length === 0) {
+                trashList.innerHTML = '<div style="text-align: center; padding: 40px; color: #6c757d;">휴지통이 비어있습니다</div>';
+                return;
+            }
+
+            trashList.innerHTML = '';
+
+            items.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'trash-item';
+
+                const timeText = item.hours_remaining > 0
+                    ? `${item.hours_remaining}시간 ${item.minutes_remaining}분 후 삭제`
+                    : `${item.minutes_remaining}분 후 삭제`;
+
+                itemDiv.innerHTML = `
+                    <div class="trash-item-info">
+                        <div class="trash-item-name">${item.is_dir ? '📁' : '📄'} ${item.name}</div>
+                        <div class="trash-item-meta">${item.original_path} • ${timeText}</div>
+                    </div>
+                    <button class="btn-restore" onclick="restoreItem('${item.id}')">복원</button>
+                `;
+
+                trashList.appendChild(itemDiv);
+            });
+        }
+
+        // 휴지통에서 복원
+        function restoreItem(trashId) {
+            if (!confirm('이 항목을 복원하시겠습니까?')) {
+                return;
+            }
+
+            fetch(`/trash/restore/${trashId}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    loadTrashList();
+                    updateTrashCount();
+                    // 현재 페이지 새로고침
+                    setTimeout(() => location.reload(), 500);
+                } else {
+                    alert('오류: ' + (data.error || '복원 실패'));
+                }
+            })
+            .catch(error => {
+                alert('네트워크 오류: ' + error);
+            });
+        }
+
+        // 다운로드 링크 복사 기능
+        function copyDownloadLink(path) {
+            const baseUrl = window.location.origin;
+            const downloadUrl = `${baseUrl}/download/${path}`;
+
+            // 클립보드에 복사
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(downloadUrl)
+                    .then(() => {
+                        // 버튼 피드백
+                        const buttons = document.querySelectorAll('.copy-link-btn');
+                        buttons.forEach(btn => {
+                            if (btn.getAttribute('onclick').includes(path)) {
+                                const originalText = btn.textContent;
+                                btn.textContent = '✓ 복사됨!';
+                                btn.classList.add('copied');
+
+                                setTimeout(() => {
+                                    btn.textContent = originalText;
+                                    btn.classList.remove('copied');
+                                }, 2000);
+                            }
+                        });
+                    })
+                    .catch(err => {
+                        alert('링크 복사 실패: ' + err);
+                    });
+            } else {
+                // 구형 브라우저 대응
+                const textArea = document.createElement('textarea');
+                textArea.value = downloadUrl;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.select();
+
+                try {
+                    document.execCommand('copy');
+                    alert('링크가 복사되었습니다:\n' + downloadUrl);
+                } catch (err) {
+                    alert('링크 복사 실패. 수동으로 복사하세요:\n' + downloadUrl);
+                }
+
+                document.body.removeChild(textArea);
+            }
+        }
+
+        // 폴더 생성 기능
+        const createFolderBtn = document.getElementById('create-folder-btn');
+        const folderModal = document.getElementById('folder-modal');
+        const folderNameInput = document.getElementById('folder-name-input');
+        const modalCancel = document.getElementById('modal-cancel');
+        const modalCreate = document.getElementById('modal-create');
+
+        // 폴더 만들기 버튼 클릭
+        createFolderBtn.addEventListener('click', () => {
+            folderModal.classList.add('active');
+            folderNameInput.value = '';
+            folderNameInput.focus();
+        });
+
+        // 모달 취소
+        modalCancel.addEventListener('click', () => {
+            folderModal.classList.remove('active');
+        });
+
+        // 모달 바깥 클릭시 닫기
+        folderModal.addEventListener('click', (e) => {
+            if (e.target === folderModal) {
+                folderModal.classList.remove('active');
+            }
+        });
+
+        // 엔터키로 폴더 생성
+        folderNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                createFolder();
+            }
+        });
+
+        // 폴더 만들기
+        modalCreate.addEventListener('click', createFolder);
+
+        function createFolder() {
+            const folderName = folderNameInput.value.trim();
+
+            if (!folderName) {
+                alert('폴더 이름을 입력해주세요');
+                return;
+            }
+
+            const mkdirUrl = currentPath ? `/mkdir/${currentPath}` : '/mkdir';
+
+            fetch(mkdirUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    folder_name: folderName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    folderModal.classList.remove('active');
+                    alert(`폴더 "${data.folder_name}"가 생성되었습니다`);
+                    location.reload();
+                } else {
+                    alert('오류: ' + (data.error || '폴더 생성 실패'));
+                }
+            })
+            .catch(error => {
+                alert('네트워크 오류: ' + error);
+            });
+        }
+    </script>
+</body>
+</html>
