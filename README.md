@@ -1,6 +1,6 @@
-# 파일 서버
+# 파일 서버 for Siemens Project
 
-깔끔한 UI를 가진 간단한 파일 공유 서버입니다.
+Siemens에서 Project 수행을 위한 깔끔한 UI를 가진 간단한 파일 공유 서버입니다.
 
 ## 설치 방법
 
