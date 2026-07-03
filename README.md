@@ -15,7 +15,7 @@ pip install -r requirements.txt
 
 1. `file_server.py` 파일을 열어서 공유할 폴더 경로를 수정:
 ```python
-FILE_DIRECTORY = r"C:\Users\z004vyth\Downloads"  # 원하는 경로로 변경
+FILE_DIRECTORY = r"D:\FileShare"  # 원하는 경로로 변경
 ```
 
 2. 서버 실행:
