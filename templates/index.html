@@ -47,6 +47,38 @@
             font-size: 1.1em;
         }
 
+        .tab-nav {
+            display: flex;
+            background: rgba(255, 255, 255, 0.15);
+            margin: 20px 30px 0;
+            border-radius: 8px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .tab-nav a {
+            flex: 1;
+            padding: 10px 20px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.75);
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+
+        .tab-nav a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .tab-nav a.active {
+            background: white;
+            color: #667eea;
+            font-weight: 600;
+        }
+
         .breadcrumb {
             padding: 15px 30px;
             background: #f8f9fa;
@@ -617,6 +649,10 @@
         <div class="header">
             <h1>📁 Siemens 파일 공유</h1>
             <p>원하는 파일을 검색하고 다운로드하세요</p>
+            <nav class="tab-nav">
+                <a href="/browse/" class="active">📁 파일 공유</a>
+                <a href="/memo">📝 메모</a>
+            </nav>
         </div>
 
         {% if current_path or breadcrumbs %}

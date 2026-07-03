@@ -21,6 +21,7 @@ ROOT_DIRECTORY = r"C:\Siemens"  # 원하는 경로로 변경하세요
 TEMP_DIRECTORY = os.path.join(ROOT_DIRECTORY, ".upload_temp")  # 임시 업로드 폴더
 TRASH_DIRECTORY = os.path.join(ROOT_DIRECTORY, ".trash")  # 휴지통 폴더
 TRASH_LOG = os.path.join(ROOT_DIRECTORY, ".trash_log.json")  # 삭제 기록 파일
+MEMO_FILE = os.path.join(ROOT_DIRECTORY, ".memos.json")  # 메모 파일
 
 # 폴더 생성
 os.makedirs(TEMP_DIRECTORY, exist_ok=True)
@@ -683,6 +684,102 @@ def serve_icon(filename):
     """아이콘 파일 제공"""
     icon_dir = os.path.join(os.path.dirname(__file__), 'icon')
     return send_file(os.path.join(icon_dir, filename))
+
+# 메모 관련 함수
+def load_memos():
+    if os.path.exists(MEMO_FILE):
+        try:
+            with open(MEMO_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except:
+            return []
+    return []
+
+def save_memos(memos):
+    with open(MEMO_FILE, 'w', encoding='utf-8') as f:
+        json.dump(memos, f, ensure_ascii=False, indent=2)
+
+@app.route('/memo')
+def memo_page():
+    """메모 페이지"""
+    return render_template('memo.html')
+
+@app.route('/api/memos', methods=['GET'])
+def api_get_memos():
+    """메모 목록 조회"""
+    try:
+        memos = load_memos()
+        return jsonify({'success': True, 'memos': memos})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/memos', methods=['POST'])
+def api_create_memo():
+    """메모 생성"""
+    try:
+        data = request.get_json()
+        title = data.get('title', '').strip()
+        content = data.get('content', '').strip()
+
+        if not content:
+            return jsonify({'error': '내용을 입력해주세요'}), 400
+
+        memos = load_memos()
+        memo_id = str(uuid.uuid4())
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        memo = {
+            'id': memo_id,
+            'title': title,
+            'content': content,
+            'created_at': now,
+            'updated_at': now
+        }
+        memos.insert(0, memo)
+        save_memos(memos)
+
+        return jsonify({'success': True, 'memo': memo})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/memos/<memo_id>', methods=['PUT'])
+def api_update_memo(memo_id):
+    """메모 수정"""
+    try:
+        data = request.get_json()
+        title = data.get('title', '').strip()
+        content = data.get('content', '').strip()
+
+        if not content:
+            return jsonify({'error': '내용을 입력해주세요'}), 400
+
+        memos = load_memos()
+        for memo in memos:
+            if memo['id'] == memo_id:
+                memo['title'] = title
+                memo['content'] = content
+                memo['updated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                save_memos(memos)
+                return jsonify({'success': True, 'memo': memo})
+
+        return jsonify({'error': '메모를 찾을 수 없습니다'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/memos/<memo_id>', methods=['DELETE'])
+def api_delete_memo(memo_id):
+    """메모 삭제"""
+    try:
+        memos = load_memos()
+        updated = [m for m in memos if m['id'] != memo_id]
+
+        if len(updated) == len(memos):
+            return jsonify({'error': '메모를 찾을 수 없습니다'}), 404
+
+        save_memos(updated)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     # 서비스 시작 시 휴지통 정리 스레드 시작
