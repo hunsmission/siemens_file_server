@@ -623,6 +623,102 @@
             margin-bottom: 15px;
         }
 
+        /* 정렬 버튼 */
+        .sort-bar {
+            padding: 10px 30px;
+            background: #fff;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .sort-btn {
+            padding: 5px 14px;
+            border: 1px solid #dee2e6;
+            border-radius: 20px;
+            background: white;
+            color: #495057;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .sort-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .sort-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* 덮어쓰기 모달 */
+        .overwrite-modal-content {
+            max-width: 520px;
+        }
+
+        .overwrite-file-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .overwrite-file-name {
+            font-weight: 600;
+            color: #dc3545;
+            margin-bottom: 10px;
+            word-break: break-all;
+        }
+
+        .overwrite-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .overwrite-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .overwrite-option input[type="radio"] {
+            accent-color: #667eea;
+        }
+
+        .overwrite-rename-input {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 14px;
+            border: 1.5px solid #dee2e6;
+            border-radius: 6px;
+            margin-top: 6px;
+            transition: all 0.2s;
+            display: none;
+        }
+
+        .overwrite-rename-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .overwrite-scroll {
+            max-height: 340px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 1.8em;
@@ -724,55 +820,16 @@
             총 <strong>{{ items|length }}</strong>개 항목
         </div>
 
-        <div class="file-list">
-            {% if items %}
-                {% for item in items %}
-                    {% if item.is_dir %}
-                        <div class="file-item" style="cursor: default;">
-                            <div class="file-icon folder-icon" style="cursor: pointer;" onclick="location.href='/browse/{{ item.path }}'">
-                                📁
-                            </div>
-                            <div class="file-info" style="cursor: pointer;" onclick="location.href='/browse/{{ item.path }}'">
-                                <div class="file-name">{{ item.name }}</div>
-                                <div class="file-meta">
-                                    폴더 • {{ item.modified }}
-                                </div>
-                            </div>
-                            <div class="btn-actions">
-                                <button class="copy-link-btn" onclick="copyDownloadLink('{{ item.path }}'); event.stopPropagation();" title="다운로드 링크 복사">🔗 링크</button>
-                                <a href="/download/{{ item.path }}" class="download-btn" onclick="event.stopPropagation()" title="ZIP으로 다운로드">💾 ZIP</a>
-                                <button class="delete-btn" onclick="deleteItem('{{ item.path }}', '{{ item.name }}', true); event.stopPropagation();">삭제</button>
-                            </div>
-                        </div>
-                    {% else %}
-                        <div class="file-item">
-                            <div class="file-icon">
-                                {% set ext = item.name.split('.')[-1].upper() %}
-                                {{ ext[:3] if ext else '📄' }}
-                            </div>
-                            <div class="file-info">
-                                <div class="file-name">{{ item.name }}</div>
-                                <div class="file-meta">
-                                    {{ item.size }} • {{ item.modified }}
-                                </div>
-                            </div>
-                            <div class="btn-actions">
-                                <button class="copy-link-btn" onclick="copyDownloadLink('{{ item.path }}'); event.stopPropagation();" title="다운로드 링크 복사">🔗 링크</button>
-                                <a href="/download/{{ item.path }}" class="download-btn" onclick="event.stopPropagation()">다운로드</a>
-                                <button class="delete-btn" onclick="deleteItem('{{ item.path }}', '{{ item.name }}', false); event.stopPropagation();">삭제</button>
-                            </div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <h3>항목이 없습니다</h3>
-                    <p>{% if search_query %}검색 결과가 없습니다{% else %}이 폴더는 비어있습니다{% endif %}</p>
-                </div>
-            {% endif %}
+        <div class="sort-bar">
+            <span>정렬:</span>
+            <button class="sort-btn active" id="sort-name-asc" onclick="setSort('name','asc')">이름 ▲</button>
+            <button class="sort-btn" id="sort-name-desc" onclick="setSort('name','desc')">이름 ▼</button>
+            <button class="sort-btn" id="sort-date-desc" onclick="setSort('date','desc')">최신 날짜</button>
+            <button class="sort-btn" id="sort-date-asc" onclick="setSort('date','asc')">오래된 날짜</button>
+        </div>
+
+        <div class="file-list" id="file-list">
+            <!-- JS로 렌더링 -->
         </div>
     </div>
 
@@ -807,38 +864,123 @@
         </div>
     </div>
 
+    <!-- 덮어쓰기 확인 모달 -->
+    <div class="modal" id="overwrite-modal">
+        <div class="modal-content overwrite-modal-content">
+            <div class="modal-header">⚠️ 동일한 파일명이 존재합니다</div>
+            <p style="margin-bottom:14px; color:#495057; font-size:14px;">
+                아래 파일들이 이미 존재합니다. 각 파일에 대한 처리 방법을 선택해주세요.
+            </p>
+            <div class="overwrite-scroll" id="overwrite-list">
+                <!-- JS로 채워짐 -->
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" id="overwrite-cancel">취소</button>
+                <button class="modal-btn modal-btn-create" id="overwrite-confirm">업로드</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // 파일 아이템 클릭시 다운로드 (폴더가 아닐 때만)
-        document.querySelectorAll('.file-item:not([href])').forEach(item => {
-            item.addEventListener('click', function(e) {
-                // 버튼 클릭은 무시
-                if (e.target.classList.contains('download-btn') ||
-                    e.target.classList.contains('delete-btn') ||
-                    e.target.closest('.download-btn') ||
-                    e.target.closest('.delete-btn') ||
-                    e.target.closest('.btn-actions')) {
-                    return;
-                }
+        const currentPath = '{{ current_path }}';
+        const searchQuery = '{{ search_query }}';
 
-                // file-icon이나 file-info 클릭 시
-                if (e.target.closest('.file-icon') || e.target.closest('.file-info')) {
-                    // onclick 속성이 있으면 (폴더) 그걸 실행
-                    const icon = this.querySelector('.file-icon[onclick]');
-                    if (icon) {
-                        icon.click();
-                        return;
-                    }
-                }
+        // ── 파일 목록 데이터 (서버에서 주입) ──
+        let allItems = {{ items | tojson }};
+        let sortKey = 'name';
+        let sortDir = 'asc';
 
-                // 그 외 영역 클릭 시 다운로드 (파일만)
-                const downloadBtn = this.querySelector('.download-btn');
-                if (downloadBtn && !downloadBtn.textContent.includes('ZIP')) {
-                    downloadBtn.click();
+        // ── 정렬 ──
+        function setSort(key, dir) {
+            sortKey = key;
+            sortDir = dir;
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`sort-${key === 'name' ? 'name' : 'date'}-${dir}`).classList.add('active');
+            renderFileList();
+        }
+
+        function getSortedItems() {
+            const items = [...allItems];
+            items.sort((a, b) => {
+                // 폴더 항상 위
+                if (a.is_dir !== b.is_dir) return a.is_dir ? -1 : 1;
+                let cmp;
+                if (sortKey === 'name') {
+                    cmp = a.name.toLowerCase().localeCompare(b.name.toLowerCase(), 'ko');
+                } else {
+                    cmp = a.modified_ts - b.modified_ts;
                 }
+                return sortDir === 'asc' ? cmp : -cmp;
             });
-        });
+            return items;
+        }
 
-        // 업로드 기능
+        function getExt(name) {
+            const parts = name.split('.');
+            if (parts.length < 2) return '📄';
+            return parts[parts.length - 1].toUpperCase().slice(0, 3);
+        }
+
+        function escAttr(s) {
+            return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        function renderFileList() {
+            const list = document.getElementById('file-list');
+            const items = getSortedItems();
+
+            if (items.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <h3>항목이 없습니다</h3>
+                        <p>${searchQuery ? '검색 결과가 없습니다' : '이 폴더는 비어있습니다'}</p>
+                    </div>`;
+                return;
+            }
+
+            list.innerHTML = items.map(item => {
+                const p = escAttr(item.path);
+                const n = escAttr(item.name);
+                if (item.is_dir) {
+                    return `
+                    <div class="file-item" style="cursor:default;">
+                        <div class="file-icon folder-icon" style="cursor:pointer;" onclick="location.href='/browse/${p}'">📁</div>
+                        <div class="file-info" style="cursor:pointer;" onclick="location.href='/browse/${p}'">
+                            <div class="file-name">${n}</div>
+                            <div class="file-meta">폴더 • ${item.modified}</div>
+                        </div>
+                        <div class="btn-actions">
+                            <button class="copy-link-btn" onclick="copyDownloadLink('${p}');event.stopPropagation();" title="다운로드 링크 복사">🔗 링크</button>
+                            <a href="/download/${p}" class="download-btn" onclick="event.stopPropagation()" title="ZIP으로 다운로드">💾 ZIP</a>
+                            <button class="delete-btn" onclick="deleteItem('${p}','${n}',true);event.stopPropagation();">삭제</button>
+                        </div>
+                    </div>`;
+                } else {
+                    return `
+                    <div class="file-item">
+                        <div class="file-icon">${getExt(item.name)}</div>
+                        <div class="file-info">
+                            <div class="file-name">${n}</div>
+                            <div class="file-meta">${item.size} • ${item.modified}</div>
+                        </div>
+                        <div class="btn-actions">
+                            <button class="copy-link-btn" onclick="copyDownloadLink('${p}');event.stopPropagation();" title="다운로드 링크 복사">🔗 링크</button>
+                            <a href="/download/${p}" class="download-btn" onclick="event.stopPropagation()">다운로드</a>
+                            <button class="delete-btn" onclick="deleteItem('${p}','${n}',false);event.stopPropagation();">삭제</button>
+                        </div>
+                    </div>`;
+                }
+            }).join('');
+        }
+
+        // 초기 렌더링
+        renderFileList();
+
+        // ── 업로드 ──
         const uploadArea = document.getElementById('upload-area');
         const fileInput = document.getElementById('file-input');
         const uploadProgress = document.getElementById('upload-progress');
@@ -850,65 +992,31 @@
         const btnConfirmUpload = document.getElementById('btn-confirm-upload');
         const btnCancelUpload = document.getElementById('btn-cancel-upload');
 
-        // 현재 경로
-        const currentPath = '{{ current_path }}';
+        uploadArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) uploadFiles(e.target.files); });
 
-        // 클릭으로 파일 선택
-        uploadArea.addEventListener('click', () => {
-            fileInput.click();
-        });
-
-        // 파일 선택시 업로드
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                uploadFiles(e.target.files);
-            }
-        });
-
-        // 드래그 앤 드롭
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('drag-over');
-        });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('drag-over');
-        });
-
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadArea.classList.remove('drag-over');
-
-            if (e.dataTransfer.files.length > 0) {
-                uploadFiles(e.dataTransfer.files);
-            }
+            if (e.dataTransfer.files.length > 0) uploadFiles(e.dataTransfer.files);
         });
 
-        // 파일 업로드 함수 (임시 폴더에 저장)
         function uploadFiles(files) {
             const formData = new FormData();
+            for (let i = 0; i < files.length; i++) formData.append('files[]', files[i]);
 
-            for (let i = 0; i < files.length; i++) {
-                formData.append('files[]', files[i]);
-            }
-
-            // 진행 상태 표시
             uploadProgress.style.display = 'block';
             uploadStatusText.textContent = `${files.length}개 파일 임시 저장 중...`;
             uploadStatus.textContent = '';
             progressFill.style.width = '0%';
 
-            // 임시 업로드 경로
             const uploadUrl = currentPath ? `/upload_temp/${currentPath}` : '/upload_temp';
-
-            // AJAX 업로드
             const xhr = new XMLHttpRequest();
 
             xhr.upload.addEventListener('progress', (e) => {
-                if (e.lengthComputable) {
-                    const percentComplete = (e.loaded / e.total) * 100;
-                    progressFill.style.width = percentComplete + '%';
-                }
+                if (e.lengthComputable) progressFill.style.width = (e.loaded / e.total * 100) + '%';
             });
 
             xhr.addEventListener('load', () => {
@@ -918,14 +1026,8 @@
                     uploadStatus.textContent = `${response.count}개 파일이 임시 저장되었습니다. 아래에서 확인 후 "업로드 완료" 버튼을 눌러주세요.`;
                     uploadStatus.style.color = '#28a745';
                     progressFill.style.width = '100%';
-
-                    // 임시 파일 목록 표시
                     displayTempFiles(response.files);
-
-                    // 3초 후 진행바 숨기기
-                    setTimeout(() => {
-                        uploadProgress.style.display = 'none';
-                    }, 3000);
+                    setTimeout(() => { uploadProgress.style.display = 'none'; }, 3000);
                 } else {
                     const response = JSON.parse(xhr.responseText);
                     uploadStatusText.textContent = '업로드 실패';
@@ -942,15 +1044,11 @@
 
             xhr.open('POST', uploadUrl, true);
             xhr.send(formData);
-
-            // 파일 입력 초기화
             fileInput.value = '';
         }
 
-        // 임시 파일 목록 표시
         function displayTempFiles(files) {
             tempFilesList.innerHTML = '';
-
             files.forEach(file => {
                 const item = document.createElement('div');
                 item.className = 'temp-file-item';
@@ -958,27 +1056,97 @@
                     <div class="temp-file-info">
                         <div class="temp-file-name">${file.name}</div>
                         <div class="temp-file-size">${file.size_str}</div>
-                    </div>
-                `;
+                    </div>`;
                 tempFilesList.appendChild(item);
             });
-
             tempFilesSection.style.display = 'block';
         }
 
-        // 업로드 확정
+        // ── 업로드 확정 (중복 체크 포함) ──
         btnConfirmUpload.addEventListener('click', () => {
-            if (!confirm('임시 저장된 파일을 이 위치에 업로드하시겠습니까?')) {
-                return;
-            }
+            fetch('/check_duplicates', { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) { alert('오류: ' + (data.error || '확인 실패')); return; }
+                if (data.duplicates.length > 0) {
+                    showOverwriteModal(data.duplicates);
+                } else {
+                    doConfirmUpload({});
+                }
+            })
+            .catch(err => alert('네트워크 오류: ' + err));
+        });
 
+        // ── 덮어쓰기 모달 ──
+        const overwriteModal = document.getElementById('overwrite-modal');
+        const overwriteList = document.getElementById('overwrite-list');
+        const overwriteConfirm = document.getElementById('overwrite-confirm');
+        const overwriteCancel = document.getElementById('overwrite-cancel');
+
+        function showOverwriteModal(duplicates) {
+            overwriteList.innerHTML = '';
+            duplicates.forEach(filename => {
+                const safe = filename.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                const uid = 'ow_' + Math.random().toString(36).slice(2);
+                const div = document.createElement('div');
+                div.className = 'overwrite-file-item';
+                div.dataset.filename = filename;
+                div.innerHTML = `
+                    <div class="overwrite-file-name">⚠️ ${safe}</div>
+                    <div class="overwrite-options">
+                        <label class="overwrite-option">
+                            <input type="radio" name="${uid}" value="overwrite"> 덮어쓰기 (기존 파일 교체)
+                        </label>
+                        <label class="overwrite-option">
+                            <input type="radio" name="${uid}" value="rename" checked> 자동으로 이름 변경
+                        </label>
+                        <label class="overwrite-option">
+                            <input type="radio" name="${uid}" value="custom"> 직접 파일명 입력
+                        </label>
+                        <input type="text" class="overwrite-rename-input" placeholder="새 파일명을 입력하세요..." value="${safe}">
+                    </div>`;
+                // 라디오 변경 시 입력창 표시/숨김
+                div.querySelectorAll('input[type="radio"]').forEach(radio => {
+                    radio.addEventListener('change', () => {
+                        const inp = div.querySelector('.overwrite-rename-input');
+                        inp.style.display = radio.value === 'custom' ? 'block' : 'none';
+                    });
+                });
+                overwriteList.appendChild(div);
+            });
+            overwriteModal.classList.add('active');
+        }
+
+        overwriteCancel.addEventListener('click', () => overwriteModal.classList.remove('active'));
+        overwriteModal.addEventListener('click', (e) => { if (e.target === overwriteModal) overwriteModal.classList.remove('active'); });
+
+        overwriteConfirm.addEventListener('click', () => {
+            const decisions = {};
+            overwriteList.querySelectorAll('.overwrite-file-item').forEach(item => {
+                const filename = item.dataset.filename;
+                const selected = item.querySelector('input[type="radio"]:checked');
+                if (!selected) return;
+                if (selected.value === 'custom') {
+                    const inp = item.querySelector('.overwrite-rename-input');
+                    decisions[filename] = inp.value.trim() || filename;
+                } else {
+                    decisions[filename] = selected.value;
+                }
+            });
+            overwriteModal.classList.remove('active');
+            doConfirmUpload(decisions);
+        });
+
+        function doConfirmUpload(overwriteDecisions) {
             btnConfirmUpload.disabled = true;
             btnConfirmUpload.textContent = '처리 중...';
 
             fetch('/confirm_upload', {
-                method: 'POST'
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ overwrite_decisions: overwriteDecisions })
             })
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
                 if (data.success) {
                     alert(`${data.count}개 파일이 업로드되었습니다!`);
@@ -994,18 +1162,13 @@
                 btnConfirmUpload.disabled = false;
                 btnConfirmUpload.textContent = '✓ 업로드 완료';
             });
-        });
+        }
 
         // 업로드 취소
         btnCancelUpload.addEventListener('click', () => {
-            if (!confirm('임시 저장된 파일을 모두 삭제하시겠습니까?')) {
-                return;
-            }
-
-            fetch('/cancel_upload', {
-                method: 'POST'
-            })
-            .then(response => response.json())
+            if (!confirm('임시 저장된 파일을 모두 삭제하시겠습니까?')) return;
+            fetch('/cancel_upload', { method: 'POST' })
+            .then(r => r.json())
             .then(data => {
                 if (data.success) {
                     tempFilesSection.style.display = 'none';
@@ -1015,268 +1178,144 @@
                     alert('오류: ' + (data.error || '취소 실패'));
                 }
             })
-            .catch(error => {
-                alert('네트워크 오류: ' + error);
-            });
+            .catch(error => alert('네트워크 오류: ' + error));
         });
 
-        // 삭제 기능
+        // ── 삭제 ──
         function deleteItem(path, name, isDir) {
             const itemType = isDir ? '폴더' : '파일';
+            if (!confirm(`"${name}" ${itemType}을(를) 삭제하시겠습니까?\n\n휴지통으로 이동되며 24시간 후 자동으로 영구 삭제됩니다.`)) return;
+            if (!confirm(`정말로 삭제하시겠습니까?\n이 작업은 휴지통에서 복원할 수 있습니다.`)) return;
 
-            if (!confirm(`"${name}" ${itemType}을(를) 삭제하시겠습니까?\n\n휴지통으로 이동되며 24시간 후 자동으로 영구 삭제됩니다.`)) {
-                return;
-            }
-
-            if (!confirm(`정말로 삭제하시겠습니까?\n이 작업은 휴지통에서 복원할 수 있습니다.`)) {
-                return;
-            }
-
-            fetch(`/delete/${path}`, {
-                method: 'POST'
-            })
-            .then(response => response.json())
+            fetch(`/delete/${path}`, { method: 'POST' })
+            .then(r => r.json())
             .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    location.reload();
-                } else {
-                    alert('오류: ' + (data.error || '삭제 실패'));
-                }
+                if (data.success) { alert(data.message); location.reload(); }
+                else alert('오류: ' + (data.error || '삭제 실패'));
             })
-            .catch(error => {
-                alert('네트워크 오류: ' + error);
-            });
+            .catch(error => alert('네트워크 오류: ' + error));
         }
 
-        // 휴지통 기능
+        // ── 휴지통 ──
         const trashBtn = document.getElementById('trash-btn');
         const trashModal = document.getElementById('trash-modal');
         const trashList = document.getElementById('trash-list');
         const trashCount = document.getElementById('trash-count');
         const trashModalClose = document.getElementById('trash-modal-close');
 
-        // 휴지통 개수 업데이트
         function updateTrashCount() {
             fetch('/trash/list')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    trashCount.textContent = data.count;
-                }
-            })
-            .catch(error => {
-                console.error('휴지통 개수 조회 오류:', error);
-            });
+            .then(r => r.json())
+            .then(data => { if (data.success) trashCount.textContent = data.count; })
+            .catch(e => console.error('휴지통 개수 조회 오류:', e));
         }
 
-        // 페이지 로드 시 휴지통 개수 업데이트
         updateTrashCount();
 
-        // 휴지통 버튼 클릭
-        trashBtn.addEventListener('click', () => {
-            loadTrashList();
-            trashModal.classList.add('active');
-        });
+        trashBtn.addEventListener('click', () => { loadTrashList(); trashModal.classList.add('active'); });
+        trashModalClose.addEventListener('click', () => trashModal.classList.remove('active'));
+        trashModal.addEventListener('click', (e) => { if (e.target === trashModal) trashModal.classList.remove('active'); });
 
-        // 휴지통 모달 닫기
-        trashModalClose.addEventListener('click', () => {
-            trashModal.classList.remove('active');
-        });
-
-        // 모달 바깥 클릭시 닫기
-        trashModal.addEventListener('click', (e) => {
-            if (e.target === trashModal) {
-                trashModal.classList.remove('active');
-            }
-        });
-
-        // 휴지통 목록 로드
         function loadTrashList() {
             fetch('/trash/list')
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
-                if (data.success) {
-                    displayTrashList(data.items);
-                } else {
-                    alert('오류: ' + (data.error || '휴지통 조회 실패'));
-                }
+                if (data.success) displayTrashList(data.items);
+                else alert('오류: ' + (data.error || '휴지통 조회 실패'));
             })
-            .catch(error => {
-                alert('네트워크 오류: ' + error);
-            });
+            .catch(e => alert('네트워크 오류: ' + e));
         }
 
-        // 휴지통 목록 표시
         function displayTrashList(items) {
             if (items.length === 0) {
-                trashList.innerHTML = '<div style="text-align: center; padding: 40px; color: #6c757d;">휴지통이 비어있습니다</div>';
+                trashList.innerHTML = '<div style="text-align:center;padding:40px;color:#6c757d;">휴지통이 비어있습니다</div>';
                 return;
             }
-
             trashList.innerHTML = '';
-
             items.forEach(item => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'trash-item';
-
                 const timeText = item.hours_remaining > 0
                     ? `${item.hours_remaining}시간 ${item.minutes_remaining}분 후 삭제`
                     : `${item.minutes_remaining}분 후 삭제`;
-
-                itemDiv.innerHTML = `
+                const div = document.createElement('div');
+                div.className = 'trash-item';
+                div.innerHTML = `
                     <div class="trash-item-info">
                         <div class="trash-item-name">${item.is_dir ? '📁' : '📄'} ${item.name}</div>
                         <div class="trash-item-meta">${item.original_path} • ${timeText}</div>
                     </div>
-                    <button class="btn-restore" onclick="restoreItem('${item.id}')">복원</button>
-                `;
-
-                trashList.appendChild(itemDiv);
+                    <button class="btn-restore" onclick="restoreItem('${item.id}')">복원</button>`;
+                trashList.appendChild(div);
             });
         }
 
-        // 휴지통에서 복원
         function restoreItem(trashId) {
-            if (!confirm('이 항목을 복원하시겠습니까?')) {
-                return;
-            }
-
-            fetch(`/trash/restore/${trashId}`, {
-                method: 'POST'
-            })
-            .then(response => response.json())
+            if (!confirm('이 항목을 복원하시겠습니까?')) return;
+            fetch(`/trash/restore/${trashId}`, { method: 'POST' })
+            .then(r => r.json())
             .then(data => {
                 if (data.success) {
                     alert(data.message);
                     loadTrashList();
                     updateTrashCount();
-                    // 현재 페이지 새로고침
                     setTimeout(() => location.reload(), 500);
-                } else {
-                    alert('오류: ' + (data.error || '복원 실패'));
-                }
+                } else alert('오류: ' + (data.error || '복원 실패'));
             })
-            .catch(error => {
-                alert('네트워크 오류: ' + error);
-            });
+            .catch(e => alert('네트워크 오류: ' + e));
         }
 
-        // 다운로드 링크 복사 기능
+        // ── 링크 복사 ──
         function copyDownloadLink(path) {
-            const baseUrl = window.location.origin;
-            const downloadUrl = `${baseUrl}/download/${path}`;
-
-            // 클립보드에 복사
+            const downloadUrl = `${window.location.origin}/download/${path}`;
             if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(downloadUrl)
-                    .then(() => {
-                        // 버튼 피드백
-                        const buttons = document.querySelectorAll('.copy-link-btn');
-                        buttons.forEach(btn => {
-                            if (btn.getAttribute('onclick').includes(path)) {
-                                const originalText = btn.textContent;
-                                btn.textContent = '✓ 복사됨!';
-                                btn.classList.add('copied');
-
-                                setTimeout(() => {
-                                    btn.textContent = originalText;
-                                    btn.classList.remove('copied');
-                                }, 2000);
-                            }
-                        });
-                    })
-                    .catch(err => {
-                        alert('링크 복사 실패: ' + err);
+                navigator.clipboard.writeText(downloadUrl).then(() => {
+                    document.querySelectorAll('.copy-link-btn').forEach(btn => {
+                        if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(path)) {
+                            const orig = btn.textContent;
+                            btn.textContent = '✓ 복사됨!';
+                            btn.classList.add('copied');
+                            setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+                        }
                     });
+                }).catch(err => alert('링크 복사 실패: ' + err));
             } else {
-                // 구형 브라우저 대응
-                const textArea = document.createElement('textarea');
-                textArea.value = downloadUrl;
-                textArea.style.position = 'fixed';
-                textArea.style.left = '-999999px';
-                document.body.appendChild(textArea);
-                textArea.select();
-
-                try {
-                    document.execCommand('copy');
-                    alert('링크가 복사되었습니다:\n' + downloadUrl);
-                } catch (err) {
-                    alert('링크 복사 실패. 수동으로 복사하세요:\n' + downloadUrl);
-                }
-
-                document.body.removeChild(textArea);
+                const ta = document.createElement('textarea');
+                ta.value = downloadUrl;
+                ta.style.position = 'fixed'; ta.style.left = '-999999px';
+                document.body.appendChild(ta); ta.select();
+                try { document.execCommand('copy'); alert('링크가 복사되었습니다:\n' + downloadUrl); }
+                catch (err) { alert('링크 복사 실패. 수동으로 복사하세요:\n' + downloadUrl); }
+                document.body.removeChild(ta);
             }
         }
 
-        // 폴더 생성 기능
+        // ── 폴더 생성 ──
         const createFolderBtn = document.getElementById('create-folder-btn');
         const folderModal = document.getElementById('folder-modal');
         const folderNameInput = document.getElementById('folder-name-input');
         const modalCancel = document.getElementById('modal-cancel');
         const modalCreate = document.getElementById('modal-create');
 
-        // 폴더 만들기 버튼 클릭
-        createFolderBtn.addEventListener('click', () => {
-            folderModal.classList.add('active');
-            folderNameInput.value = '';
-            folderNameInput.focus();
-        });
-
-        // 모달 취소
-        modalCancel.addEventListener('click', () => {
-            folderModal.classList.remove('active');
-        });
-
-        // 모달 바깥 클릭시 닫기
-        folderModal.addEventListener('click', (e) => {
-            if (e.target === folderModal) {
-                folderModal.classList.remove('active');
-            }
-        });
-
-        // 엔터키로 폴더 생성
-        folderNameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                createFolder();
-            }
-        });
-
-        // 폴더 만들기
+        createFolderBtn.addEventListener('click', () => { folderModal.classList.add('active'); folderNameInput.value = ''; folderNameInput.focus(); });
+        modalCancel.addEventListener('click', () => folderModal.classList.remove('active'));
+        folderModal.addEventListener('click', (e) => { if (e.target === folderModal) folderModal.classList.remove('active'); });
+        folderNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') createFolder(); });
         modalCreate.addEventListener('click', createFolder);
 
         function createFolder() {
             const folderName = folderNameInput.value.trim();
-
-            if (!folderName) {
-                alert('폴더 이름을 입력해주세요');
-                return;
-            }
-
+            if (!folderName) { alert('폴더 이름을 입력해주세요'); return; }
             const mkdirUrl = currentPath ? `/mkdir/${currentPath}` : '/mkdir';
-
             fetch(mkdirUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    folder_name: folderName
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ folder_name: folderName })
             })
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
-                if (data.success) {
-                    folderModal.classList.remove('active');
-                    alert(`폴더 "${data.folder_name}"가 생성되었습니다`);
-                    location.reload();
-                } else {
-                    alert('오류: ' + (data.error || '폴더 생성 실패'));
-                }
+                if (data.success) { folderModal.classList.remove('active'); alert(`폴더 "${data.folder_name}"가 생성되었습니다`); location.reload(); }
+                else alert('오류: ' + (data.error || '폴더 생성 실패'));
             })
-            .catch(error => {
-                alert('네트워크 오류: ' + error);
-            });
+            .catch(e => alert('네트워크 오류: ' + e));
         }
     </script>
 </body>

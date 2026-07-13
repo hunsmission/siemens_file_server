@@ -19,6 +19,10 @@ app.secret_key = os.urandom(24)  # 세션 암호화 키
 # 공유할 파일들이 있는 루트 디렉토리 경로 설정
 ROOT_DIRECTORY = r"C:\Siemens"  # 원하는 경로로 변경하세요
 TEMP_DIRECTORY = os.path.join(ROOT_DIRECTORY, ".upload_temp")  # 임시 업로드 폴더
+
+# Werkzeug 업로드 버퍼 위치를 ROOT_DIRECTORY와 같은 드라이브로 지정
+# (미설정 시 C드라이브 시스템 Temp를 사용해 대용량 업로드 시 C드라이브 공간 부족 발생)
+tempfile.tempdir = TEMP_DIRECTORY
 TRASH_DIRECTORY = os.path.join(ROOT_DIRECTORY, ".trash")  # 휴지통 폴더
 TRASH_LOG = os.path.join(ROOT_DIRECTORY, ".trash_log.json")  # 삭제 기록 파일
 MEMO_FILE = os.path.join(ROOT_DIRECTORY, ".memos.json")  # 메모 파일
@@ -198,6 +202,7 @@ def get_item_info(filepath, relative_path=""):
         'size': size_str,
         'size_bytes': stats.st_size,
         'modified': datetime.fromtimestamp(stats.st_mtime).strftime('%Y-%m-%d %H:%M:%S'),
+        'modified_ts': stats.st_mtime,
         'is_dir': is_dir
     }
 
@@ -206,7 +211,7 @@ def get_items_in_directory(directory, search_query=None):
     items = []
 
     # 숨김 항목 목록 (시스템 폴더/파일)
-    hidden_items = {'.trash', '.upload_temp', '.trash_log.json'}
+    hidden_items = {'.trash', '.upload_temp', '.trash_log.json', '.memos.json'}
 
     try:
         for item in os.listdir(directory):
@@ -444,9 +449,48 @@ def upload_temp(subpath=''):
         print(f"Error uploading to temp: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/check_duplicates', methods=['POST'])
+def check_duplicates():
+    """임시 폴더의 파일 중 목적지에 이미 존재하는 파일 목록 반환"""
+    try:
+        if 'upload_id' not in session:
+            return jsonify({'error': '업로드 세션이 없습니다'}), 400
+
+        upload_id = session['upload_id']
+        subpath = session.get('target_path', '')
+
+        user_temp_dir = os.path.join(TEMP_DIRECTORY, upload_id)
+
+        if not os.path.exists(user_temp_dir):
+            return jsonify({'error': '임시 파일을 찾을 수 없습니다'}), 404
+
+        if subpath:
+            subpath_normalized = subpath.replace('/', os.sep)
+            target_dir = os.path.join(ROOT_DIRECTORY, subpath_normalized)
+        else:
+            target_dir = ROOT_DIRECTORY
+
+        if not os.path.abspath(target_dir).startswith(os.path.abspath(ROOT_DIRECTORY)):
+            abort(403)
+
+        duplicates = []
+        for filename in os.listdir(user_temp_dir):
+            dst_path = os.path.join(target_dir, filename)
+            if os.path.exists(dst_path):
+                duplicates.append(filename)
+
+        return jsonify({'success': True, 'duplicates': duplicates})
+
+    except Exception as e:
+        print(f"Error checking duplicates: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/confirm_upload', methods=['POST'])
 def confirm_upload():
-    """임시 폴더의 파일을 최종 목적지로 이동"""
+    """임시 폴더의 파일을 최종 목적지로 이동
+    overwrite_decisions: {filename: 'overwrite'|'rename'|새이름문자열}
+    """
     try:
         if 'upload_id' not in session:
             return jsonify({'error': '업로드 세션이 없습니다'}), 400
@@ -473,26 +517,51 @@ def confirm_upload():
         if not os.path.exists(target_dir):
             abort(404)
 
+        data = request.get_json(silent=True) or {}
+        overwrite_decisions = data.get('overwrite_decisions', {})
+
         moved_files = []
 
-        # 임시 폴더의 모든 파일을 목적지로 이동
         for filename in os.listdir(user_temp_dir):
             src_path = os.path.join(user_temp_dir, filename)
             dst_path = os.path.join(target_dir, filename)
+            final_filename = filename
 
-            # 목적지에 같은 파일명이 있으면 번호 추가
             if os.path.exists(dst_path):
-                name, ext = os.path.splitext(filename)
-                counter = 1
-                while os.path.exists(dst_path):
-                    new_filename = f"{name}_{counter}{ext}"
-                    dst_path = os.path.join(target_dir, new_filename)
-                    counter += 1
-                filename = new_filename
+                decision = overwrite_decisions.get(filename, 'rename')
 
-            # 파일 이동
+                if decision == 'overwrite':
+                    # 덮어쓰기: 기존 파일 그대로 덮어씀
+                    pass
+                elif decision == 'rename':
+                    # 자동 번호 추가
+                    name, ext = os.path.splitext(filename)
+                    counter = 1
+                    while os.path.exists(dst_path):
+                        final_filename = f"{name}_{counter}{ext}"
+                        dst_path = os.path.join(target_dir, final_filename)
+                        counter += 1
+                else:
+                    # 사용자가 직접 입력한 새 이름
+                    new_name = secure_filename(str(decision))
+                    if new_name:
+                        final_filename = new_name
+                        dst_path = os.path.join(target_dir, final_filename)
+                        # 새 이름도 충돌 시 번호 추가
+                        if os.path.exists(dst_path):
+                            name, ext = os.path.splitext(final_filename)
+                            counter = 1
+                            while os.path.exists(dst_path):
+                                final_filename = f"{name}_{counter}{ext}"
+                                dst_path = os.path.join(target_dir, final_filename)
+                                counter += 1
+
+            # 보안: 목적지 경로 검증
+            if not os.path.abspath(dst_path).startswith(os.path.abspath(ROOT_DIRECTORY)):
+                continue
+
             shutil.move(src_path, dst_path)
-            moved_files.append(filename)
+            moved_files.append(final_filename)
 
         # 임시 폴더 삭제
         shutil.rmtree(user_temp_dir, ignore_errors=True)
