@@ -1,9 +1,9 @@
 from flask import Flask, render_template, send_file, request, abort, jsonify, redirect, url_for, session
 import os
+import re
 from pathlib import Path
 from datetime import datetime, timedelta
 from urllib.parse import quote, unquote
-from werkzeug.utils import secure_filename
 import uuid
 import shutil
 import json
@@ -11,6 +11,20 @@ import threading
 import time
 import zipfile
 import tempfile
+
+def safe_filename(filename):
+    """한글 등 유니코드 문자를 보존하면서 파일명을 안전하게 정제합니다."""
+    # 경로 구분자 및 위험 문자 제거
+    filename = os.path.basename(filename)
+    # Windows/Unix 파일명에서 금지된 문자 제거: \ / : * ? " < > |  그리고 제어문자
+    filename = re.sub(r'[\\/:*?"<>|\x00-\x1f]', '_', filename)
+    # 선행/후행 공백 및 점 제거 (Windows 호환성)
+    filename = filename.strip('. ')
+    # 빈 문자열이면 fallback
+    if not filename:
+        return None
+    return filename
+
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024 * 1024  # 최대 50GB
@@ -405,22 +419,22 @@ def upload_temp(subpath=''):
             if file.filename == '':
                 continue
 
-            # 원본 파일명 저장 (안전한 파일명으로 변환하지 않음)
+            # 원본 파일명 저장
             original_filename = file.filename
-            safe_filename = secure_filename(original_filename)
+            cleaned_filename = safe_filename(original_filename)
 
-            if not safe_filename:
+            if not cleaned_filename:
                 continue
 
-            temp_file_path = os.path.join(user_temp_dir, safe_filename)
+            temp_file_path = os.path.join(user_temp_dir, cleaned_filename)
 
             # 임시 폴더에서도 중복 방지
             if os.path.exists(temp_file_path):
-                name, ext = os.path.splitext(safe_filename)
+                name, ext = os.path.splitext(cleaned_filename)
                 counter = 1
                 while os.path.exists(temp_file_path):
-                    safe_filename = f"{name}_{counter}{ext}"
-                    temp_file_path = os.path.join(user_temp_dir, safe_filename)
+                    cleaned_filename = f"{name}_{counter}{ext}"
+                    temp_file_path = os.path.join(user_temp_dir, cleaned_filename)
                     counter += 1
 
             # 임시 폴더에 저장
@@ -429,7 +443,7 @@ def upload_temp(subpath=''):
             # 파일 크기 계산
             file_size = os.path.getsize(temp_file_path)
             uploaded_files.append({
-                'name': safe_filename,
+                'name': cleaned_filename,
                 'original_name': original_filename,
                 'size': file_size,
                 'size_str': format_file_size(file_size)
@@ -543,7 +557,7 @@ def confirm_upload():
                         counter += 1
                 else:
                     # 사용자가 직접 입력한 새 이름
-                    new_name = secure_filename(str(decision))
+                    new_name = safe_filename(str(decision))
                     if new_name:
                         final_filename = new_name
                         dst_path = os.path.join(target_dir, final_filename)
@@ -641,7 +655,7 @@ def make_directory(subpath=''):
             return jsonify({'error': '폴더 이름을 입력해주세요'}), 400
 
         # 안전한 폴더명으로 변환
-        folder_name = secure_filename(folder_name)
+        folder_name = safe_filename(folder_name)
         if not folder_name:
             return jsonify({'error': '유효하지 않은 폴더 이름입니다'}), 400
 
