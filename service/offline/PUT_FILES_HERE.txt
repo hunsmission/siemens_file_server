@@ -1,0 +1,40 @@
+이 폴더에 아래 파일들을 넣으면 오프라인 / PowerShell 없는 환경에서도 Setup 이 가능합니다.
+==========================================================================================
+
+[1] Python 설치파일
+    파일명 : python-3.11.9-amd64.exe  (파일명에 버전이 포함되면 자동 인식)
+    다운로드: https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe
+
+[2] nssm.exe  (Windows 서비스 등록용, 서비스 설치 시에만 필요)
+    파일명 : nssm.exe  (win64 버전)
+    다운로드: https://nssm.cc/release/nssm-2.24.zip
+              압축 해제 후 nssm-2.24\win64\nssm.exe 파일만 여기에 복사
+
+[3] wheels 폴더  (Python 패키지 오프라인 설치용)
+    폴더명 : wheels\
+    인터넷 되는 PC 에서 아래 명령으로 수집:
+
+      pip download flask==3.0.0 -d "wheels" --platform win_amd64 --python-version 311 --only-binary=:all:
+
+    생성된 wheels\ 폴더 전체를 이 폴더 안에 복사.
+
+==========================================================================================
+최종 폴더 구조:
+
+  service\
+  └── offline\
+      ├── python-3.11.9-amd64.exe
+      ├── nssm.exe
+      └── wheels\
+          ├── flask-3.0.0-py3-none-any.whl
+          ├── werkzeug-*.whl
+          ├── jinja2-*.whl
+          ├── markupsafe-*-cp311-cp311-win_amd64.whl
+          └── ... (pip download 로 자동 수집됨)
+
+==========================================================================================
+동작 방식:
+  - Python    : PATH 에 없으면 → offline\python-*.exe 로 자동 설치
+  - 패키지    : offline\wheels\ 있으면 → 오프라인 설치 / 없으면 → pip 온라인 설치
+  - nssm.exe  : offline\nssm.exe 있으면 → 복사 (PowerShell 불필요)
+                없으면 → PowerShell + 인터넷으로 다운로드 시도

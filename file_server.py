@@ -1,6 +1,12 @@
+import sys
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
 from flask import Flask, render_template, send_file, request, abort, jsonify, redirect, url_for, session
 import os
 import re
+import configparser
 from pathlib import Path
 from datetime import datetime, timedelta
 from urllib.parse import quote, unquote
@@ -30,8 +36,18 @@ app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024 * 1024  # 최대 50GB
 app.secret_key = os.urandom(24)  # 세션 암호화 키
 
-# 공유할 파일들이 있는 루트 디렉토리 경로 설정
-ROOT_DIRECTORY = r"C:\Siemens"  # 원하는 경로로 변경하세요
+# config.ini 로드
+_CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'config.ini')
+if not os.path.exists(_CONFIG_FILE):
+    raise FileNotFoundError(
+        f"설정 파일을 찾을 수 없습니다: {_CONFIG_FILE}\n"
+        "config.ini.sample 을 복사하여 config.ini 를 만들고 설정값을 입력하세요."
+    )
+_config = configparser.ConfigParser()
+_config.read(_CONFIG_FILE, encoding='utf-8')
+
+ROOT_DIRECTORY = _config.get('server', 'root_directory').strip()
+SERVER_PORT = _config.getint('server', 'port', fallback=8181)
 TEMP_DIRECTORY = os.path.join(ROOT_DIRECTORY, ".upload_temp")  # 임시 업로드 폴더
 
 # Werkzeug 업로드 버퍼 위치를 ROOT_DIRECTORY와 같은 드라이브로 지정
@@ -874,7 +890,7 @@ if __name__ == '__main__':
     print(f"파일 서버 시작!")
     print(f"공유 디렉토리: {ROOT_DIRECTORY}")
     print(f"휴지통 디렉토리: {TRASH_DIRECTORY}")
-    print(f"접속 주소: http://localhost:8181")
-    print(f"다른 PC에서 접속: http://<이 PC의 IP>:8181")
+    print(f"접속 주소: http://localhost:{SERVER_PORT}")
+    print(f"다른 PC에서 접속: http://<이 PC의 IP>:{SERVER_PORT}")
 
-    app.run(host='0.0.0.0', port=8181, debug=True)
+    app.run(host='0.0.0.0', port=SERVER_PORT, debug=True)

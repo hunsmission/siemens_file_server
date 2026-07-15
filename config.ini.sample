@@ -1,0 +1,6 @@
+[server]
+# 파일 서버가 열릴 포트 번호
+port = 8181
+
+# 공유할 파일들이 있는 루트 디렉토리 경로
+root_directory = C:\Siemens
